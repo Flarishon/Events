@@ -1,4 +1,5 @@
 using Events.Objects;
+using System;
 
 namespace Events
 {
@@ -7,12 +8,19 @@ namespace Events
         List<BaseObject> objects = new();
         Player player;
         Marker marker;
+        RedCircle redCircle;
+        GreenCircle firstGreenCircle;
+        GreenCircle secondGreenCircle;
+        Random rnd = new Random();
+        int score = 0;
 
         public Form1()
         {
             InitializeComponent();
 
             player = new Player(pbMain.Width / 2, pbMain.Height / 2, 0);
+
+            redCircle = new RedCircle(rnd.Next(20, pbMain.Width - 20), rnd.Next(20, pbMain.Height - 20), 0);
 
             player.OnOverlap += (p, obj) =>
             {
@@ -25,8 +33,45 @@ namespace Events
                 marker = null;
             };
 
-            objects.Add(marker);
+            player.OnGreenCircleOverlap += (gc) =>
+            {
+                objects.Remove(gc);
+                if (gc == firstGreenCircle)
+                {
+                    firstGreenCircle = null;
+                    firstGreenCircle = new GreenCircle(rnd.Next(20, pbMain.Width - 20), rnd.Next(20, pbMain.Height - 20), 0);
+                    objects.Add(firstGreenCircle);
+                    score++;
+                }   
+                else if (gc == secondGreenCircle)
+                {
+                    secondGreenCircle = null;
+                    secondGreenCircle = new GreenCircle(rnd.Next(20, pbMain.Width - 20), rnd.Next(20, pbMain.Height - 20), 0);
+                    objects.Add(secondGreenCircle);
+                    score++;
+                }
+                txtScore.Text = $"Очки: {score}";
+            };
+
+            redCircle.OnPlayerOverlap += (obj) =>
+            {
+                redCircle.Reset();
+                redCircle.X = rnd.Next(20, pbMain.Width - 20);
+                redCircle.Y = rnd.Next(20, pbMain.Height - 20);
+                score--;
+                txtScore.Text = $"Очки: {score}";
+            };
+
+            marker = new Marker(pbMain.Width / 2 + 50, pbMain.Height / 2 + 50, 0);
+
+            firstGreenCircle = new GreenCircle(rnd.Next(20, pbMain.Width - 20), rnd.Next(20, pbMain.Height - 20), 0);
+            secondGreenCircle = new GreenCircle(rnd.Next(20, pbMain.Width - 20), rnd.Next(20, pbMain.Height - 20), 0);
+
             objects.Add(player);
+            objects.Add(marker);
+            objects.Add(firstGreenCircle);
+            objects.Add(secondGreenCircle);
+            objects.Add(redCircle);
         }
 
         private void pbMain_Paint(object sender, PaintEventArgs e)
@@ -44,6 +89,11 @@ namespace Events
                     player.Overlap(obj);
                     obj.Overlap(player);
                 }
+            }
+
+            if (redCircle != null)
+            {
+                redCircle.Update();
             }
 
             foreach (var obj in objects)
